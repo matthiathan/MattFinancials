@@ -24,31 +24,58 @@ import { Budget } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { cn, formatCurrency } from '../../lib/utils';
 
-const barData = [
-  { name: 'Housing', budget: 20000, actual: 19500 },
-  { name: 'Food', budget: 6000, actual: 7200 },
-  { name: 'Transport', budget: 4000, actual: 3800 },
-  { name: 'Entertainment', budget: 3000, actual: 4500 },
-  { name: 'Shopping', budget: 5000, actual: 4800 },
-];
-
 export function Budgets() {
   const { user } = useAuth();
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
+  const [chartData, setChartData] = useState<{name: string, budget: number, actual: number}[]>([]);
+  const [totalHealth, setTotalHealth] = useState({ spent: 0, limit: 0 });
 
   useEffect(() => {
     async function fetchData() {
       if (!user) return;
-      const { data } = await supabase
+      
+      // Fetch budgets
+      const { data: budgetData } = await supabase
         .from('budgets')
         .select('*')
         .eq('user_id', user.id);
-      if (data) setBudgets(data);
+      
+      // Fetch transactions to calculate actual spending
+      const { data: txData } = await supabase
+        .from('transactions')
+        .select('amount, category, type')
+        .eq('user_id', user.id)
+        .eq('type', 'expense');
+
+      if (budgetData) {
+        setBudgets(budgetData);
+        
+        const calculatedData = budgetData.map(b => {
+          const actual = txData
+            ?.filter(tx => tx.category === b.category)
+            .reduce((sum, tx) => sum + Math.abs(tx.amount), 0) || 0;
+          
+          return {
+            name: b.category,
+            budget: b.limit_amount,
+            actual: actual
+          };
+        });
+
+        setChartData(calculatedData);
+
+        const totalLimit = budgetData.reduce((sum, b) => sum + b.limit_amount, 0);
+        const totalSpent = calculatedData.reduce((sum, d) => sum + d.actual, 0);
+        setTotalHealth({ spent: totalSpent, limit: totalLimit });
+      }
       setLoading(false);
     }
     fetchData();
   }, [user]);
+
+  const healthPercentage = totalHealth.limit > 0 ? (totalHealth.spent / totalHealth.limit) * 100 : 0;
+  const overBudgetCategories = chartData.filter(d => d.actual > d.budget);
 
   return (
     <div className="space-y-8 pb-10">
@@ -71,7 +98,7 @@ export function Budgets() {
           </CardHeader>
           <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={barData} layout="vertical" margin={{ left: 40 }}>
+              <BarChart data={chartData} layout="vertical" margin={{ left: 40 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" horizontal={false} />
                 <XAxis type="number" stroke="#4B5563" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => `R${value/1000}k`} />
                 <YAxis dataKey="name" type="category" stroke="#4B5563" fontSize={10} tickLine={false} axisLine={false} />
@@ -79,16 +106,22 @@ export function Budgets() {
                   contentStyle={{ backgroundColor: '#111827', border: '1px solid #1F2937', borderRadius: '12px' }}
                   itemStyle={{ fontSize: '12px' }}
                   cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                  formatter={(value: number) => [formatCurrency(value), '']}
                 />
                 <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em' }} />
                 <Bar dataKey="budget" fill="#1F2937" radius={[0, 4, 4, 0]} name="Budget Limit" />
                 <Bar dataKey="actual" radius={[0, 4, 4, 0]} name="Actual Spent">
-                  {barData.map((entry, index) => (
+                  {chartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.actual > entry.budget ? '#EF4444' : '#6366F1'} />
                   ))}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+            {chartData.length === 0 && !loading && (
+              <div className="absolute inset-0 flex items-center justify-center text-slate-500 text-xs font-bold uppercase tracking-widest">
+                No budget data available
+              </div>
+            )}
           </div>
         </Card>
 
@@ -107,18 +140,38 @@ export function Budgets() {
               <div>
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Total Budget Spent</span>
-                  <span className="font-black text-white">78%</span>
+                  <span className="font-black text-white">{healthPercentage.toFixed(0)}%</span>
                 </div>
                 <div className="h-2 bg-white/5 rounded-full overflow-hidden border border-white/5">
-                  <div className="h-full bg-primary rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]" style={{ width: '78%' }} />
+                  <div 
+                    className={cn(
+                      "h-full rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(99,102,241,0.5)]",
+                      healthPercentage > 100 ? "bg-error" : "bg-primary"
+                    )} 
+                    style={{ width: `${Math.min(healthPercentage, 100)}%` }} 
+                  />
                 </div>
               </div>
-              <div className="p-4 bg-error/10 rounded-2xl border border-error/20">
+              <div className={cn(
+                "p-4 rounded-2xl border",
+                overBudgetCategories.length > 0 ? "bg-error/10 border-error/20" : "bg-success/10 border-success/20"
+              )}>
                 <div className="flex items-start gap-3">
-                  <AlertCircle size={18} className="shrink-0 mt-0.5 text-error" />
-                  <p className="text-xs leading-relaxed text-slate-300">
-                    Critical alert: You've exceeded your <strong className="text-error">Food</strong> budget by {formatCurrency(1200)}. AI suggests reducing <strong className="text-primary">Entertainment</strong> spending to compensate.
-                  </p>
+                  {overBudgetCategories.length > 0 ? (
+                    <>
+                      <AlertCircle size={18} className="shrink-0 mt-0.5 text-error" />
+                      <p className="text-xs leading-relaxed text-slate-300">
+                        Critical alert: You've exceeded your <strong className="text-error">{overBudgetCategories[0].name}</strong> budget by {formatCurrency(overBudgetCategories[0].actual - overBudgetCategories[0].budget)}. AI suggests reviewing your spending in this category.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <Zap size={18} className="shrink-0 mt-0.5 text-success" />
+                      <p className="text-xs leading-relaxed text-slate-300">
+                        System Status: All budgets optimized. Your spending is currently within the defined parameters.
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

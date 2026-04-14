@@ -2,7 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 
 const apiKey = process.env.GEMINI_API_KEY || '';
 const ai = new GoogleGenAI({ apiKey });
-const model = "gemini-3-flash-preview";
+const model = "gemini-2.0-flash";
 
 export async function getFinancialInsights(context: any) {
   try {

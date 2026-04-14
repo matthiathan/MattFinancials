@@ -28,20 +28,6 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { cn, formatCurrency } from '../../lib/utils';
 
-const lineData = [
-  { name: 'Jul', value: 1100000 },
-  { name: 'Aug', value: 1125000 },
-  { name: 'Sep', value: 1150000 },
-  { name: 'Oct', value: 1180000 },
-  { name: 'Nov', value: 1210000 },
-  { name: 'Dec', value: 1245000 },
-];
-
-const pieData = [
-  { name: 'Assets', value: 1500000 },
-  { name: 'Liabilities', value: 255000 },
-];
-
 const COLORS = ['#6366F1', '#EF4444'];
 
 export function NetWorth() {
@@ -51,6 +37,7 @@ export function NetWorth() {
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState<any[]>([]);
   const [allocationData, setAllocationData] = useState<any[]>([]);
+  const [liabilities, setLiabilities] = useState<any[]>([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -92,7 +79,7 @@ export function NetWorth() {
 
           history.push({
             name: months[m],
-            value: cashAtTime + totalInvestmentValue // Simplified: assuming investment value is constant for history
+            value: cashAtTime + totalInvestmentValue
           });
         }
         setChartData(history);
@@ -103,6 +90,22 @@ export function NetWorth() {
           { name: 'Cash', value: Math.max(0, cash) },
           { name: 'Investments', value: totalInvestmentValue }
         ]);
+
+        // Liabilities (Debt transactions)
+        const debtMap = new Map();
+        txData
+          .filter(tx => tx.type === 'expense' && tx.category === 'Debt')
+          .forEach(tx => {
+            const current = debtMap.get(tx.description) || 0;
+            debtMap.set(tx.description, current + Math.abs(tx.amount));
+          });
+        
+        const liabilityList = Array.from(debtMap.entries()).map(([name, value]) => ({
+          name,
+          value,
+          change: '0%' // Placeholder for change
+        }));
+        setLiabilities(liabilityList);
       }
 
       setLoading(false);
@@ -111,7 +114,7 @@ export function NetWorth() {
   }, [user]);
 
   const totalAssets = allocationData.reduce((sum, d) => sum + d.value, 0);
-  const totalLiabilities = Math.abs(transactions.filter(tx => tx.type === 'expense' && tx.category === 'Debt').reduce((sum, tx) => sum + tx.amount, 0));
+  const totalLiabilities = liabilities.reduce((sum, l) => sum + l.value, 0);
   const netWorth = totalAssets - totalLiabilities;
 
   return (
@@ -249,11 +252,9 @@ export function NetWorth() {
             </button>
           </CardHeader>
           <div className="space-y-4">
-            {[
-              { name: 'Credit Card', value: 25000, change: '-12.4%' },
-              { name: 'Student Loan', value: 150000, change: '-1.1%' },
-              { name: 'Car Loan', value: 80000, change: '-2.5%' },
-            ].map((liability, i) => (
+            {liabilities.length === 0 ? (
+              <div className="py-8 text-center text-slate-500 text-xs font-bold uppercase tracking-widest">No liabilities detected</div>
+            ) : liabilities.map((liability, i) => (
               <div key={i} className="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 border border-transparent hover:border-border transition-all group">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-error/10 flex items-center justify-center text-error border border-error/20">
@@ -261,7 +262,7 @@ export function NetWorth() {
                   </div>
                   <div>
                     <p className="font-bold text-white">{liability.name}</p>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Updated 1 day ago</p>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Updated recently</p>
                   </div>
                 </div>
                 <div className="text-right">

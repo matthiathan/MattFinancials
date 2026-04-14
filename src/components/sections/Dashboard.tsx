@@ -34,22 +34,6 @@ import { motion } from 'motion/react';
 import { getFinancialInsights } from '../../services/aiService';
 import { cn, formatCurrency } from '../../lib/utils';
 
-const barData = [
-  { name: 'Jan', income: 45000, expenses: 28000 },
-  { name: 'Feb', income: 42000, expenses: 31000 },
-  { name: 'Mar', income: 48000, expenses: 29000 },
-  { name: 'Apr', income: 46000, expenses: 32000 },
-  { name: 'May', income: 51000, expenses: 30000 },
-  { name: 'Jun', income: 49000, expenses: 33000 },
-];
-
-const pieData = [
-  { name: 'Housing', value: 12000 },
-  { name: 'Food', value: 5500 },
-  { name: 'Transport', value: 3200 },
-  { name: 'Entertainment', value: 2800 },
-];
-
 const COLORS = ['#6366F1', '#22D3EE', '#10B981', '#F59E0B'];
 
 export function Dashboard() {
