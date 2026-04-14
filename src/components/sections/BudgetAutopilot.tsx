@@ -144,18 +144,21 @@ export function BudgetAutopilot() {
               <h3 className="font-bold text-lg text-white">Neural Insights</h3>
             </div>
             <div className="space-y-6">
-              <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                <p className="text-[10px] text-slate-500 mb-2 uppercase font-bold tracking-widest">Efficiency Alert</p>
-                <p className="text-xs text-slate-200 leading-relaxed">
-                  "Your average grocery spending is {formatCurrency(3200)} per month. Suggested budget: {formatCurrency(3500)} (includes 10% safety buffer)."
-                </p>
-              </div>
-              <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                <p className="text-[10px] text-slate-500 mb-2 uppercase font-bold tracking-widest">Optimization Tip</p>
-                <p className="text-xs text-slate-200 leading-relaxed">
-                  "Dining spending increased 18% this month. Consider raising your budget to {formatCurrency(2800)} to avoid overages."
-                </p>
-              </div>
+              {recommendations.length === 0 ? (
+                <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                  <p className="text-[10px] text-slate-500 mb-2 uppercase font-bold tracking-widest">System Status</p>
+                  <p className="text-xs text-slate-200 leading-relaxed">
+                    "All financial sectors are currently optimized. No new neural insights detected."
+                  </p>
+                </div>
+              ) : recommendations.slice(0, 2).map((rec, i) => (
+                <div key={i} className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                  <p className="text-[10px] text-slate-500 mb-2 uppercase font-bold tracking-widest">{i === 0 ? 'Efficiency Alert' : 'Optimization Tip'}</p>
+                  <p className="text-xs text-slate-200 leading-relaxed">
+                    "Your average {rec.category.toLowerCase()} spending is {formatCurrency(rec.average_spending)} per month. Suggested allocation: {formatCurrency(rec.suggested_budget)}."
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </Card>

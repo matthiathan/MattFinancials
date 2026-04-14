@@ -194,28 +194,47 @@ export function CreditScore() {
             <h3 className="font-bold text-white">Optimization Insights</h3>
           </div>
           <div className="space-y-4">
-            <div className="flex gap-4 p-4 bg-background/40 rounded-2xl border border-white/5">
-              <div className="w-10 h-10 rounded-xl bg-success/20 flex items-center justify-center text-success shrink-0">
-                <TrendingUp size={20} />
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-white mb-1">Score Improvement</h4>
+            {scores.length === 0 ? (
+              <div className="p-4 bg-background/40 rounded-2xl border border-white/5">
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  "Your credit score improved by 12 points this month due to lower credit utilization."
+                  "No credit data detected. Connect your credit monitoring service to receive neural insights."
                 </p>
               </div>
-            </div>
-            <div className="flex gap-4 p-4 bg-background/40 rounded-2xl border border-white/5">
-              <div className="w-10 h-10 rounded-xl bg-secondary/20 flex items-center justify-center text-secondary shrink-0">
-                <AlertCircle size={20} />
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-white mb-1">Utilization Alert</h4>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  "Your credit utilization is {utilization.toFixed(0)}%. Reducing it below 30% could significantly improve your credit score."
-                </p>
-              </div>
-            </div>
+            ) : (
+              <>
+                <div className="flex gap-4 p-4 bg-background/40 rounded-2xl border border-white/5">
+                  <div className="w-10 h-10 rounded-xl bg-success/20 flex items-center justify-center text-success shrink-0">
+                    <TrendingUp size={20} />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white mb-1">Score Trajectory</h4>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      {scoreDiff > 0 
+                        ? `Your credit score improved by ${scoreDiff} points recently. Maintain this momentum by keeping utilization low.`
+                        : scoreDiff < 0 
+                        ? `Your credit score decreased by ${Math.abs(scoreDiff)} points. Review your recent credit activity for anomalies.`
+                        : "Your credit score has remained stable. Focus on long-term credit history to see further growth."}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-4 p-4 bg-background/40 rounded-2xl border border-white/5">
+                  <div className={cn(
+                    "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+                    utilization > 30 ? "bg-secondary/20 text-secondary" : "bg-success/20 text-success"
+                  )}>
+                    {utilization > 30 ? <AlertCircle size={20} /> : <ShieldCheck size={20} />}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white mb-1">Utilization Analysis</h4>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      {utilization > 30 
+                        ? `Your credit utilization is ${utilization.toFixed(0)}%. Reducing it below 30% could significantly improve your credit score.`
+                        : `Your credit utilization is healthy at ${utilization.toFixed(0)}%. This is a key driver for your current score category.`}
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </Card>
       </div>

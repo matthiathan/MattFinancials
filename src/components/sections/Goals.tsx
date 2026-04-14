@@ -100,16 +100,34 @@ export function Goals() {
               <h3 className="font-bold text-lg text-white">Objective Insights</h3>
             </div>
             <div className="space-y-6">
-              <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                <p className="text-[10px] text-slate-500 mb-2 uppercase font-bold tracking-widest">Top Performer</p>
-                <h4 className="font-bold text-white mb-1">Emergency Fund</h4>
-                <p className="text-xs text-success font-bold">92% Complete • {formatCurrency(8000)} to go</p>
-              </div>
-              <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                <p className="text-[10px] text-slate-500 mb-2 uppercase font-bold tracking-widest">Needs Attention</p>
-                <h4 className="font-bold text-white mb-1">New Car</h4>
-                <p className="text-xs text-secondary font-bold">15% Complete • {formatCurrency(127500)} to go</p>
-              </div>
+              {goals.length === 0 ? (
+                <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    "No active objectives. Define your financial targets to receive neural insights."
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {goals.sort((a, b) => (b.current_amount / b.target_amount) - (a.current_amount / a.target_amount)).slice(0, 1).map((goal, i) => (
+                    <div key={i} className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                      <p className="text-[10px] text-slate-500 mb-2 uppercase font-bold tracking-widest">Top Performer</p>
+                      <h4 className="font-bold text-white mb-1">{goal.name}</h4>
+                      <p className="text-xs text-success font-bold">
+                        {((goal.current_amount / goal.target_amount) * 100).toFixed(0)}% Complete • {formatCurrency(goal.target_amount - goal.current_amount)} to go
+                      </p>
+                    </div>
+                  ))}
+                  {goals.sort((a, b) => (a.current_amount / a.target_amount) - (b.current_amount / b.target_amount)).slice(0, 1).map((goal, i) => (
+                    <div key={i} className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                      <p className="text-[10px] text-slate-500 mb-2 uppercase font-bold tracking-widest">Needs Attention</p>
+                      <h4 className="font-bold text-white mb-1">{goal.name}</h4>
+                      <p className="text-xs text-secondary font-bold">
+                        {((goal.current_amount / goal.target_amount) * 100).toFixed(0)}% Complete • {formatCurrency(goal.target_amount - goal.current_amount)} to go
+                      </p>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
           </div>
         </Card>

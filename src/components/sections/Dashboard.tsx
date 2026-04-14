@@ -59,18 +59,27 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [aiInsight, setAiInsight] = useState<string | null>(null);
   const [loadingInsight, setLoadingInsight] = useState(true);
+  const [stats, setStats] = useState({
+    netWorth: 0,
+    monthlyIncome: 0,
+    monthlyExpenses: 0,
+    savingsRate: 0,
+    expectedExpenses: 0,
+    projectedSavings: 0,
+    healthScore: 0
+  });
+  const [chartData, setChartData] = useState<{name: string, income: number, expenses: number}[]>([]);
 
   useEffect(() => {
     async function fetchData() {
       if (!user) return;
       
-      const { data: txData } = await supabase
+      // Fetch transactions for stats and charts
+      const { data: allTx } = await supabase
         .from('transactions')
         .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false })
-        .limit(5);
-      
+        .eq('user_id', user.id);
+
       const { data: eventData } = await supabase
         .from('financial_events')
         .select('*')
@@ -79,18 +88,108 @@ export function Dashboard() {
         .order('event_date', { ascending: true })
         .limit(3);
 
-      if (txData) {
-        setRecentTransactions(txData);
-        const insight = await getFinancialInsights(txData);
+      const { data: investments } = await supabase
+        .from('investments')
+        .select('current_value')
+        .eq('user_id', user.id);
+
+      if (allTx) {
+        // Calculate Stats
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        const monthlyIncome = allTx
+          .filter(tx => {
+            const d = new Date(tx.date);
+            return d.getMonth() === currentMonth && d.getFullYear() === currentYear && tx.type === 'income';
+          })
+          .reduce((sum, tx) => sum + tx.amount, 0);
+
+        const monthlyExpenses = allTx
+          .filter(tx => {
+            const d = new Date(tx.date);
+            return d.getMonth() === currentMonth && d.getFullYear() === currentYear && tx.type === 'expense';
+          })
+          .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+
+        const totalInvestmentValue = investments?.reduce((sum, inv) => sum + (inv.current_value || 0), 0) || 0;
+        const totalCash = allTx.reduce((sum, tx) => sum + (tx.type === 'income' ? tx.amount : -Math.abs(tx.amount)), 0);
+        const netWorth = totalCash + totalInvestmentValue;
+
+        const savingsRate = monthlyIncome > 0 ? ((monthlyIncome - monthlyExpenses) / monthlyIncome) * 100 : 0;
+
+        // Simple forecast (average of last 3 months)
+        const last3Months = [0, 1, 2].map(i => {
+          const d = new Date();
+          d.setMonth(d.getMonth() - i);
+          return { month: d.getMonth(), year: d.getFullYear() };
+        });
+
+        const avgExpenses = last3Months.reduce((sum, m) => {
+          const monthExp = allTx
+            .filter(tx => {
+              const d = new Date(tx.date);
+              return d.getMonth() === m.month && d.getFullYear() === m.year && tx.type === 'expense';
+            })
+            .reduce((s, tx) => s + Math.abs(tx.amount), 0);
+          return sum + monthExp;
+        }, 0) / 3;
+
+        // Chart Data (Last 6 months)
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const last6MonthsData = [];
+        for (let i = 5; i >= 0; i--) {
+          const d = new Date();
+          d.setMonth(d.getMonth() - i);
+          const m = d.getMonth();
+          const y = d.getFullYear();
+
+          const income = allTx
+            .filter(tx => {
+              const date = new Date(tx.date);
+              return date.getMonth() === m && date.getFullYear() === y && tx.type === 'income';
+            })
+            .reduce((sum, tx) => sum + tx.amount, 0);
+
+          const expenses = allTx
+            .filter(tx => {
+              const date = new Date(tx.date);
+              return date.getMonth() === m && date.getFullYear() === y && tx.type === 'expense';
+            })
+            .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+
+          last6MonthsData.push({
+            name: months[m],
+            income,
+            expenses
+          });
+        }
+
+        setChartData(last6MonthsData);
+        setStats({
+          netWorth,
+          monthlyIncome,
+          monthlyExpenses,
+          savingsRate: Math.max(0, savingsRate),
+          expectedExpenses: avgExpenses || monthlyExpenses,
+          projectedSavings: Math.max(0, monthlyIncome - (avgExpenses || monthlyExpenses)),
+          healthScore: Math.min(100, Math.max(0, Math.round((savingsRate + 50) * 0.8))) // Simplified health score
+        });
+
+        setRecentTransactions(allTx.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5));
+        
+        const insight = await getFinancialInsights(allTx.slice(0, 20));
         setAiInsight(insight);
       }
+
       if (eventData) setUpcomingEvents(eventData);
       
       setLoadingInsight(false);
       setLoading(false);
     }
     fetchData();
-  }, []);
+  }, [user]);
 
   const getEventTimeLabel = (dateStr: string) => {
     const today = new Date();
@@ -159,15 +258,21 @@ export function Dashboard() {
           <div className="relative w-32 h-32 flex items-center justify-center">
             <svg className="w-full h-full -rotate-90">
               <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-800" />
-              <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray="364.4" strokeDashoffset="65.6" className="text-primary" />
+              <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray="364.4" strokeDashoffset={364.4 - (364.4 * stats.healthScore / 100)} className="text-primary transition-all duration-1000" />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-3xl font-black text-white">82</span>
+              <span className="text-3xl font-black text-white">{stats.healthScore}</span>
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Health Score</span>
             </div>
           </div>
           <div className="mt-4">
-            <span className="px-3 py-1 rounded-full bg-success/10 text-success text-[10px] font-bold uppercase tracking-widest">Excellent</span>
+            <span className={cn(
+              "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest",
+              stats.healthScore >= 80 ? "bg-success/10 text-success" : 
+              stats.healthScore >= 60 ? "bg-primary/10 text-primary" : "bg-error/10 text-error"
+            )}>
+              {stats.healthScore >= 80 ? 'Excellent' : stats.healthScore >= 60 ? 'Good' : 'Needs Attention'}
+            </span>
           </div>
         </Card>
       </div>
@@ -175,22 +280,16 @@ export function Dashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: 'Total Net Worth', value: 1250000, change: '+2.4%', icon: Wallet, color: 'text-primary', bg: 'bg-primary/10' },
-          { label: 'Monthly Income', value: 52000, change: '+5.1%', icon: TrendingUp, color: 'text-success', bg: 'bg-success/10' },
-          { label: 'Monthly Expenses', value: 31500, change: '-1.2%', icon: TrendingDown, color: 'text-error', bg: 'bg-error/10' },
-          { label: 'Savings Rate', value: '39.4%', change: '+3.2%', icon: PieChartIcon, color: 'text-secondary', bg: 'bg-secondary/10' },
+          { label: 'Total Net Worth', value: stats.netWorth, change: '', icon: Wallet, color: 'text-primary', bg: 'bg-primary/10' },
+          { label: 'Monthly Income', value: stats.monthlyIncome, change: '', icon: TrendingUp, color: 'text-success', bg: 'bg-success/10' },
+          { label: 'Monthly Expenses', value: stats.monthlyExpenses, change: '', icon: TrendingDown, color: 'text-error', bg: 'bg-error/10' },
+          { label: 'Savings Rate', value: `${stats.savingsRate.toFixed(1)}%`, change: '', icon: PieChartIcon, color: 'text-secondary', bg: 'bg-secondary/10' },
         ].map((stat, i) => (
           <Card key={i} className="hover:border-primary/30 transition-all group">
             <div className="flex justify-between items-start mb-4">
               <div className={cn("p-2 rounded-lg border border-transparent group-hover:border-current/20 transition-all", stat.bg, stat.color)}>
                 <stat.icon size={20} />
               </div>
-              <span className={cn(
-                "text-[10px] font-bold px-2 py-0.5 rounded-full border",
-                stat.change.startsWith('+') ? "bg-success/10 text-success border-success/20" : "bg-error/10 text-error border-error/20"
-              )}>
-                {stat.change}
-              </span>
             </div>
             <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">{stat.label}</p>
             <h3 className="text-2xl font-black text-white mt-1">
@@ -219,7 +318,7 @@ export function Dashboard() {
           </CardHeader>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={barData}>
+              <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" vertical={false} />
                 <XAxis dataKey="name" stroke="#4B5563" fontSize={10} tickLine={false} axisLine={false} />
                 <YAxis stroke="#4B5563" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => `R${value/1000}k`} />
@@ -278,18 +377,18 @@ export function Dashboard() {
             <div className="space-y-4">
               <div className="p-4 bg-background/40 rounded-xl border border-border">
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Expected Expenses</p>
-                <p className="text-xl font-black text-white">{formatCurrency(34500)}</p>
+                <p className="text-xl font-black text-white">{formatCurrency(stats.expectedExpenses)}</p>
               </div>
               <div className="p-4 bg-background/40 rounded-xl border border-border">
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Projected Savings</p>
-                <p className="text-xl font-black text-success">{formatCurrency(17500)}</p>
+                <p className="text-xl font-black text-success">{formatCurrency(stats.projectedSavings)}</p>
               </div>
             </div>
             <div className="p-4 bg-primary/5 rounded-xl border border-primary/20">
               <div className="flex items-start gap-3">
                 <Activity size={16} className="text-primary mt-0.5" />
                 <p className="text-[10px] text-slate-400 leading-relaxed">
-                  Based on your last 3 months, you are on track to save <span className="text-primary font-bold">R 2,400 more</span> than your average.
+                  Based on your historical data, you are currently maintaining a <span className="text-primary font-bold">{stats.savingsRate.toFixed(1)}% savings rate</span>.
                 </p>
               </div>
             </div>

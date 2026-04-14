@@ -26,7 +26,7 @@ import {
 } from 'recharts';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { formatCurrency } from '../../lib/utils';
+import { cn, formatCurrency } from '../../lib/utils';
 
 const lineData = [
   { name: 'Jul', value: 1100000 },
@@ -46,17 +46,73 @@ const COLORS = ['#6366F1', '#EF4444'];
 
 export function NetWorth() {
   const { user } = useAuth();
-  const [assets, setAssets] = useState<any[]>([]);
-  const [liabilities, setLiabilities] = useState<any[]>([]);
+  const [investments, setInvestments] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [allocationData, setAllocationData] = useState<any[]>([]);
 
   useEffect(() => {
     async function fetchData() {
       if (!user) return;
+      setLoading(true);
+
+      const { data: invData } = await supabase
+        .from('investments')
+        .select('*')
+        .eq('user_id', user.id);
+
+      const { data: txData } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (invData && txData) {
+        setInvestments(invData);
+        setTransactions(txData);
+
+        // Calculate Net Worth over time (last 6 months)
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const history = [];
+        const totalInvestmentValue = invData.reduce((sum, inv) => sum + (inv.shares * inv.current_price), 0);
+        
+        for (let i = 5; i >= 0; i--) {
+          const d = new Date();
+          d.setMonth(d.getMonth() - i);
+          const m = d.getMonth();
+          const y = d.getFullYear();
+
+          // Calculate cash at that point in time
+          const cashAtTime = txData
+            .filter(tx => {
+              const txDate = new Date(tx.date);
+              return txDate <= d;
+            })
+            .reduce((sum, tx) => sum + (tx.type === 'income' ? tx.amount : -Math.abs(tx.amount)), 0);
+
+          history.push({
+            name: months[m],
+            value: cashAtTime + totalInvestmentValue // Simplified: assuming investment value is constant for history
+          });
+        }
+        setChartData(history);
+
+        // Allocation
+        const cash = txData.reduce((sum, tx) => sum + (tx.type === 'income' ? tx.amount : -Math.abs(tx.amount)), 0);
+        setAllocationData([
+          { name: 'Cash', value: Math.max(0, cash) },
+          { name: 'Investments', value: totalInvestmentValue }
+        ]);
+      }
+
       setLoading(false);
     }
     fetchData();
   }, [user]);
+
+  const totalAssets = allocationData.reduce((sum, d) => sum + d.value, 0);
+  const totalLiabilities = Math.abs(transactions.filter(tx => tx.type === 'expense' && tx.category === 'Debt').reduce((sum, tx) => sum + tx.amount, 0));
+  const netWorth = totalAssets - totalLiabilities;
 
   return (
     <div className="space-y-8 pb-10">
@@ -81,7 +137,7 @@ export function NetWorth() {
           </CardHeader>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={lineData}>
+              <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3}/>
@@ -90,7 +146,7 @@ export function NetWorth() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" vertical={false} />
                 <XAxis dataKey="name" stroke="#4B5563" fontSize={10} tickLine={false} axisLine={false} />
-                <YAxis stroke="#4B5563" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => `R${value/1000000}M`} />
+                <YAxis stroke="#4B5563" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => `R${value/1000}k`} />
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#111827', border: '1px solid #1F2937', borderRadius: '12px' }}
                   itemStyle={{ color: '#F3F4F6', fontSize: '12px' }}
@@ -118,7 +174,7 @@ export function NetWorth() {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={pieData}
+                  data={allocationData}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -126,7 +182,7 @@ export function NetWorth() {
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  {pieData.map((entry, index) => (
+                  {allocationData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -139,20 +195,15 @@ export function NetWorth() {
             </ResponsiveContainer>
           </div>
           <div className="mt-4 space-y-3">
-            <div className="flex justify-between items-center text-sm p-2 bg-white/5 rounded-lg border border-white/5">
-              <span className="flex items-center gap-2 text-slate-400 font-bold uppercase tracking-widest text-[10px]">
-                <div className="w-2 h-2 rounded-full bg-primary" />
-                Assets
-              </span>
-              <span className="font-black text-white">{formatCurrency(1500000)}</span>
-            </div>
-            <div className="flex justify-between items-center text-sm p-2 bg-white/5 rounded-lg border border-white/5">
-              <span className="flex items-center gap-2 text-slate-400 font-bold uppercase tracking-widest text-[10px]">
-                <div className="w-2 h-2 rounded-full bg-error" />
-                Liabilities
-              </span>
-              <span className="font-black text-white">{formatCurrency(255000)}</span>
-            </div>
+            {allocationData.map((item, i) => (
+              <div key={i} className="flex justify-between items-center text-sm p-2 bg-white/5 rounded-lg border border-white/5">
+                <span className="flex items-center gap-2 text-slate-400 font-bold uppercase tracking-widest text-[10px]">
+                  <div className={cn("w-2 h-2 rounded-full", i === 0 ? "bg-primary" : "bg-secondary")} />
+                  {item.name}
+                </span>
+                <span className="font-black text-white">{formatCurrency(item.value)}</span>
+              </div>
+            ))}
           </div>
         </Card>
       </div>
@@ -164,30 +215,23 @@ export function NetWorth() {
               <CardTitle>Asset Inventory</CardTitle>
               <CardDescription>Positive magnitude holdings</CardDescription>
             </div>
-            <button className="p-2 text-slate-500 hover:text-primary transition-colors">
-              <Plus size={20} />
-            </button>
           </CardHeader>
           <div className="space-y-4">
-            {[
-              { name: 'Checking Account', value: 125000, change: '+2.1%' },
-              { name: 'Savings Account', value: 450000, change: '+0.5%' },
-              { name: 'Stock Portfolio', value: 850000, change: '+5.4%' },
-              { name: 'Real Estate', value: 75000, change: '0.0%' },
-            ].map((asset, i) => (
+            {investments.length === 0 ? (
+              <div className="py-8 text-center text-slate-500 text-xs font-bold uppercase tracking-widest">No assets detected</div>
+            ) : investments.map((inv, i) => (
               <div key={i} className="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 border border-transparent hover:border-border transition-all group">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
                     <Wallet size={20} />
                   </div>
                   <div>
-                    <p className="font-bold text-white">{asset.name}</p>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Updated 2 days ago</p>
+                    <p className="font-bold text-white">{inv.ticker}</p>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{inv.shares} Shares @ {formatCurrency(inv.current_price)}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-black text-white font-mono">{formatCurrency(asset.value)}</p>
-                  <p className="text-[10px] text-success font-bold">{asset.change}</p>
+                  <p className="font-black text-white font-mono">{formatCurrency(inv.shares * inv.current_price)}</p>
                 </div>
               </div>
             ))}

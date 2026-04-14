@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription } from '../ui/Card';
 import { 
   AreaChart, 
@@ -14,38 +14,122 @@ import {
   Bar,
   Legend
 } from 'recharts';
+import { Loader2 } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 import { formatCurrency } from '../../lib/utils';
 
-const cashFlowData = [
-  { name: 'Jan', inflow: 40000, outflow: 24000 },
-  { name: 'Feb', inflow: 30000, outflow: 13980 },
-  { name: 'Mar', inflow: 20000, outflow: 98000 },
-  { name: 'Apr', inflow: 27800, outflow: 39080 },
-  { name: 'May', inflow: 18900, outflow: 48000 },
-  { name: 'Jun', inflow: 23900, outflow: 38000 },
-  { name: 'Jul', inflow: 34900, outflow: 43000 },
-];
-
-const savingsRateData = [
-  { name: 'Jan', rate: 40 },
-  { name: 'Feb', rate: 53 },
-  { name: 'Mar', rate: -20 },
-  { name: 'Apr', rate: 35 },
-  { name: 'May', rate: 42 },
-  { name: 'Jun', rate: 49 },
-  { name: 'Jul', rate: 45 },
-];
-
-const expenseBreakdown = [
-  { name: 'Jan', Housing: 20000, Food: 6000, Transport: 4000, Other: 5000 },
-  { name: 'Feb', Housing: 20000, Food: 5500, Transport: 3800, Other: 4500 },
-  { name: 'Mar', Housing: 20000, Food: 7200, Transport: 4100, Other: 6000 },
-  { name: 'Apr', Housing: 20000, Food: 5800, Transport: 3900, Other: 5200 },
-  { name: 'May', Housing: 20000, Food: 6100, Transport: 4000, Other: 4800 },
-  { name: 'Jun', Housing: 20000, Food: 6300, Transport: 4200, Other: 5500 },
-];
-
 export function Reports() {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [cashFlowData, setCashFlowData] = useState<any[]>([]);
+  const [savingsRateData, setSavingsRateData] = useState<any[]>([]);
+  const [expenseBreakdown, setExpenseBreakdown] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function fetchData() {
+      if (!user) return;
+      setLoading(true);
+
+      const { data: allTx } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (allTx) {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const last6Months = [];
+        
+        for (let i = 5; i >= 0; i--) {
+          const d = new Date();
+          d.setMonth(d.getMonth() - i);
+          const m = d.getMonth();
+          const y = d.getFullYear();
+          const monthName = months[m];
+
+          // Cash Flow
+          const inflow = allTx
+            .filter(tx => {
+              const date = new Date(tx.date);
+              return date.getMonth() === m && date.getFullYear() === y && tx.type === 'income';
+            })
+            .reduce((sum, tx) => sum + tx.amount, 0);
+
+          const outflow = allTx
+            .filter(tx => {
+              const date = new Date(tx.date);
+              return date.getMonth() === m && date.getFullYear() === y && tx.type === 'expense';
+            })
+            .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+
+          last6Months.push({
+            name: monthName,
+            inflow,
+            outflow,
+            rate: inflow > 0 ? Math.max(0, ((inflow - outflow) / inflow) * 100) : 0
+          });
+
+          // Expense Breakdown
+          const categories = ['Housing', 'Food', 'Transport', 'Utilities', 'Entertainment', 'Healthcare', 'Shopping', 'Other'];
+          const breakdown: any = { name: monthName };
+          categories.forEach(cat => {
+            breakdown[cat] = allTx
+              .filter(tx => {
+                const date = new Date(tx.date);
+                return date.getMonth() === m && date.getFullYear() === y && tx.type === 'expense' && (tx.category === cat || (cat === 'Other' && !categories.includes(tx.category)));
+              })
+              .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+          });
+          
+          // Add to breakdown list
+          // We'll update state later
+        }
+
+        setCashFlowData(last6Months.map(d => ({ name: d.name, inflow: d.inflow, outflow: d.outflow })));
+        setSavingsRateData(last6Months.map(d => ({ name: d.name, rate: d.rate })));
+        
+        // Re-calculate breakdown for state
+        const breakdownData = [];
+        for (let i = 5; i >= 0; i--) {
+          const d = new Date();
+          d.setMonth(d.getMonth() - i);
+          const m = d.getMonth();
+          const y = d.getFullYear();
+          const monthName = months[m];
+          const categories = ['Housing', 'Food', 'Transport', 'Utilities', 'Entertainment', 'Healthcare', 'Shopping'];
+          const breakdown: any = { name: monthName };
+          let otherSum = 0;
+          
+          allTx
+            .filter(tx => {
+              const date = new Date(tx.date);
+              return date.getMonth() === m && date.getFullYear() === y && tx.type === 'expense';
+            })
+            .forEach(tx => {
+              if (categories.includes(tx.category)) {
+                breakdown[tx.category] = (breakdown[tx.category] || 0) + Math.abs(tx.amount);
+              } else {
+                otherSum += Math.abs(tx.amount);
+              }
+            });
+          breakdown['Other'] = otherSum;
+          breakdownData.push(breakdown);
+        }
+        setExpenseBreakdown(breakdownData);
+      }
+
+      setLoading(false);
+    }
+    fetchData();
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="animate-spin text-primary" size={48} />
+      </div>
+    );
+  }
   return (
     <div className="space-y-8 pb-10">
       <div>
@@ -135,7 +219,9 @@ export function Reports() {
                 <Bar dataKey="Housing" stackId="a" fill="#6366F1" radius={[0, 0, 0, 0]} />
                 <Bar dataKey="Food" stackId="a" fill="#22D3EE" radius={[0, 0, 0, 0]} />
                 <Bar dataKey="Transport" stackId="a" fill="#EF4444" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="Other" stackId="a" fill="#F59E0B" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Utilities" stackId="a" fill="#10B981" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="Entertainment" stackId="a" fill="#F59E0B" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="Other" stackId="a" fill="#4B5563" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

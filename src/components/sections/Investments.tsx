@@ -100,18 +100,16 @@ export function Investments() {
         </Card>
         <Card>
           <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Day Change</p>
-          <h3 className="text-3xl font-black text-white mb-4 font-mono">+{formatCurrency(1240.50)}</h3>
-          <div className="flex items-center gap-2 text-xs font-bold text-success">
-            <ArrowUpRight size={16} />
-            +1.45%
+          <h3 className="text-3xl font-black text-white mb-4 font-mono">---</h3>
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
+            No active stream
           </div>
         </Card>
         <Card>
           <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Annual Dividend Yield</p>
-          <h3 className="text-3xl font-black text-white mb-4 font-mono">3.2%</h3>
-          <div className="flex items-center gap-2 text-xs font-bold text-primary">
-            <PieChartIcon size={16} />
-            {formatCurrency(24500)} / year
+          <h3 className="text-3xl font-black text-white mb-4 font-mono">---</h3>
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
+            No yield data
           </div>
         </Card>
       </div>
@@ -124,7 +122,7 @@ export function Investments() {
           </CardHeader>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={lineData}>
+              <AreaChart data={investments.length > 0 ? lineData : []}>
                 <defs>
                   <linearGradient id="colorInvest" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3}/>
@@ -149,6 +147,11 @@ export function Investments() {
                 />
               </AreaChart>
             </ResponsiveContainer>
+            {investments.length === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center text-slate-500 text-xs font-bold uppercase tracking-widest">
+                Insufficient data for trajectory
+              </div>
+            )}
           </div>
         </Card>
 
@@ -161,7 +164,7 @@ export function Investments() {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={pieData}
+                  data={investments.length > 0 ? investments.map(inv => ({ name: inv.ticker, value: inv.shares * inv.current_price })) : []}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -169,7 +172,7 @@ export function Investments() {
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  {pieData.map((entry, index) => (
+                  {investments.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -179,13 +182,18 @@ export function Investments() {
                 />
               </PieChart>
             </ResponsiveContainer>
+            {investments.length === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center text-slate-500 text-xs font-bold uppercase tracking-widest">
+                No holdings
+              </div>
+            )}
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
-            {pieData.map((item, i) => (
+            {investments.slice(0, 4).map((item, i) => (
               <div key={i} className="flex items-center gap-2 p-2 bg-white/5 rounded-lg border border-white/5">
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[i] }} />
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{item.name}</span>
-                <span className="ml-auto text-[10px] text-white font-black">{item.value}%</span>
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{item.ticker}</span>
+                <span className="ml-auto text-[10px] text-white font-black">{((item.shares * item.current_price / totalValue) * 100).toFixed(0)}%</span>
               </div>
             ))}
           </div>
