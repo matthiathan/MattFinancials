@@ -17,8 +17,9 @@ import { BudgetAutopilot } from './components/sections/BudgetAutopilot';
 import { CreditScore } from './components/sections/CreditScore';
 
 function MainContent() {
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const [activeSection, setActiveSection] = useState<Section>('dashboard');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   if (loading) {
     return (
@@ -55,7 +56,9 @@ function MainContent() {
       <Sidebar 
         activeSection={activeSection} 
         onSectionChange={setActiveSection} 
-        onSignOut={() => {}} // Handled in TopBar
+        onSignOut={signOut} 
+        isOpen={isSidebarOpen}
+        setIsOpen={setIsSidebarOpen}
       />
       <div className="lg:ml-64 min-h-screen flex flex-col">
         <TopBar />

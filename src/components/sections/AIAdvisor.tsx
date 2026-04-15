@@ -110,10 +110,11 @@ export function AIAdvisor() {
           <p className="text-slate-400">Secure neural link for personalized financial optimization.</p>
         </div>
         <button 
+          type="button"
           onClick={() => setMessages([{ role: 'assistant', content: "Neural link reset. How shall we proceed with your financial optimization?" }])}
-          className="flex items-center gap-2 px-4 py-2 text-slate-500 hover:text-primary hover:bg-white/5 rounded-xl transition-all font-bold text-xs uppercase tracking-widest"
+          className="flex items-center gap-2 px-4 py-2 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-xl transition-all duration-300 font-bold text-xs uppercase tracking-widest active:scale-95 group"
         >
-          <RefreshCcw size={14} />
+          <RefreshCcw size={14} className="group-hover:rotate-180 transition-transform duration-500" />
           Reset Link
         </button>
       </div>
@@ -167,14 +168,14 @@ export function AIAdvisor() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Initialize query..."
-                className="w-full bg-background/50 border border-border rounded-2xl py-4 pl-6 pr-14 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-inner"
+                className="w-full bg-background/50 border border-border rounded-2xl py-4 pl-6 pr-14 text-sm text-white focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 focus:shadow-[0_0_20px_rgba(99,102,241,0.1)] transition-all duration-300 shadow-inner"
               />
               <button 
                 type="submit"
                 disabled={!input.trim() || isTyping}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 disabled:opacity-50 disabled:hover:bg-primary transition-all shadow-lg shadow-primary/20"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 disabled:opacity-50 disabled:hover:bg-primary transition-all duration-300 shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-90 group"
               >
-                <Send size={18} />
+                <Send size={18} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               </button>
             </form>
           </div>
@@ -195,11 +196,12 @@ export function AIAdvisor() {
                 {QUICK_PROMPTS.map((prompt, i) => (
                   <button
                     key={i}
+                    type="button"
                     onClick={() => handleSend(prompt)}
-                    className="w-full text-left p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 transition-all text-[10px] font-bold uppercase tracking-widest text-slate-300 flex items-center justify-between group"
+                    className="w-full text-left p-3 rounded-xl bg-white/5 hover:bg-primary/10 border border-white/5 hover:border-primary/30 transition-all duration-300 text-[10px] font-bold uppercase tracking-widest text-slate-300 hover:text-white flex items-center justify-between group active:scale-[0.98] hover:shadow-[0_0_15px_rgba(99,102,241,0.1)]"
                   >
                     {prompt}
-                    <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0 text-primary" />
+                    <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0 text-primary drop-shadow-[0_0_5px_rgba(99,102,241,0.8)]" />
                   </button>
                 ))}
               </div>

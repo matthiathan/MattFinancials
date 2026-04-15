@@ -201,11 +201,16 @@ export function BudgetAutopilot() {
             </div>
 
             <button 
+              type="button"
               onClick={() => handleAccept(rec)}
               disabled={processingId === rec.id}
-              className="w-full py-3 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50"
+              className="w-full py-3 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-95 disabled:opacity-50 group"
             >
-              {processingId === rec.id ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
+              {processingId === rec.id ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <Zap size={16} className="group-hover:animate-pulse" />
+              )}
               Accept Budget
             </button>
           </Card>

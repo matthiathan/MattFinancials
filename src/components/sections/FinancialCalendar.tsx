@@ -82,18 +82,29 @@ export function FinancialCalendar() {
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center bg-card/40 border border-border rounded-xl p-1">
-            <button onClick={prevMonth} className="p-2 hover:bg-white/5 rounded-lg text-slate-400 transition-colors">
+            <button 
+              type="button"
+              onClick={prevMonth} 
+              className="p-2 hover:bg-white/5 rounded-lg text-slate-400 hover:text-primary transition-all duration-300 active:scale-90 hover:shadow-[0_0_10px_rgba(99,102,241,0.2)]"
+            >
               <ChevronLeft size={20} />
             </button>
             <span className="px-4 font-bold text-white min-w-[140px] text-center">
               {monthName} {year}
             </span>
-            <button onClick={nextMonth} className="p-2 hover:bg-white/5 rounded-lg text-slate-400 transition-colors">
+            <button 
+              type="button"
+              onClick={nextMonth} 
+              className="p-2 hover:bg-white/5 rounded-lg text-slate-400 hover:text-primary transition-all duration-300 active:scale-90 hover:shadow-[0_0_10px_rgba(99,102,241,0.2)]"
+            >
               <ChevronRight size={20} />
             </button>
           </div>
-          <button className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center gap-2">
-            <Plus size={18} />
+          <button 
+            type="button"
+            className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 transition-all duration-300 shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-95 flex items-center gap-2 group"
+          >
+            <Plus size={18} className="group-hover:rotate-90 transition-transform" />
             Add Event
           </button>
         </div>

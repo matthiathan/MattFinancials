@@ -125,8 +125,11 @@ export function NetWorth() {
           <p className="text-slate-400">Track your total financial magnitude across all sectors.</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center gap-2">
-            <Plus size={18} />
+          <button 
+            type="button"
+            className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 transition-all duration-300 shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-95 flex items-center gap-2 group"
+          >
+            <Plus size={18} className="group-hover:rotate-90 transition-transform" />
             Add Asset/Liability
           </button>
         </div>
@@ -247,7 +250,10 @@ export function NetWorth() {
               <CardTitle>Liability Ledger</CardTitle>
               <CardDescription>Negative magnitude obligations</CardDescription>
             </div>
-            <button className="p-2 text-slate-500 hover:text-error transition-colors">
+            <button 
+              type="button"
+              className="p-2 text-slate-500 hover:text-error hover:bg-error/10 rounded-lg transition-all duration-300 active:scale-90"
+            >
               <Plus size={20} />
             </button>
           </CardHeader>

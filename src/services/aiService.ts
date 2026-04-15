@@ -4,7 +4,18 @@ const apiKey = process.env.GEMINI_API_KEY || '';
 const ai = new GoogleGenAI({ apiKey });
 const model = "gemini-2.0-flash";
 
+// Simple session cache to prevent redundant calls and save quota
+const cache = {
+  insights: null as { data: string, timestamp: number } | null,
+};
+
 export async function getFinancialInsights(context: any) {
+  // Return cached insight if it's less than 5 minutes old
+  const now = Date.now();
+  if (cache.insights && (now - cache.insights.timestamp < 5 * 60 * 1000)) {
+    return cache.insights.data;
+  }
+
   try {
     const response = await ai.models.generateContent({
       model,
@@ -29,9 +40,20 @@ export async function getFinancialInsights(context: any) {
       }
     });
 
-    return response.text || "Keep up the great work! Your savings rate is looking healthy this month.";
-  } catch (error) {
+    const result = response.text || "Keep up the great work! Your savings rate is looking healthy this month.";
+    
+    // Update cache
+    cache.insights = { data: result, timestamp: now };
+    
+    return result;
+  } catch (error: any) {
     console.error("AI Insight Error:", error);
+    
+    // Handle quota error specifically
+    if (error?.message?.includes('429') || error?.message?.includes('RESOURCE_EXHAUSTED')) {
+      return "Your AI advisor is currently processing a high volume of data. Check back in a few minutes for new insights.";
+    }
+    
     return "Focus on your long-term goals. Every small saving adds up to your financial freedom.";
   }
 }
@@ -61,9 +83,13 @@ export async function* streamAdvisorResponse(message: string, context: any) {
         yield chunk.text;
       }
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("AI Advisor Stream Error:", error);
-    yield "I'm sorry, I'm having trouble connecting to my brain right now. Please try again in a moment.";
+    if (error?.message?.includes('429') || error?.message?.includes('RESOURCE_EXHAUSTED')) {
+      yield "I'm currently experiencing a high volume of requests (Quota Exceeded). Please try again in a few minutes.";
+    } else {
+      yield "I'm sorry, I'm having trouble connecting to my brain right now. Please try again in a moment.";
+    }
   }
 }
 
@@ -95,8 +121,9 @@ export async function categorizeTransaction(description: string): Promise<string
     const category = response.text?.trim() || 'Shopping';
     const validCategories = ['Food', 'Transport', 'Housing', 'Utilities', 'Entertainment', 'Subscriptions', 'Healthcare', 'Shopping', 'Income', 'Savings'];
     return validCategories.includes(category) ? category : 'Shopping';
-  } catch (error) {
+  } catch (error: any) {
     console.error("Categorization Error:", error);
+    // If quota hit, just return a default category silently
     return 'Shopping';
   }
 }

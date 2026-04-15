@@ -112,8 +112,8 @@ export function Receipts() {
           <h2 className="text-3xl font-bold text-white tracking-tight">Digital Archive</h2>
           <p className="text-slate-400">Upload and manage your purchase receipts for audit verification.</p>
         </div>
-        <label className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 cursor-pointer">
-          {uploading ? <Loader2 className="animate-spin" size={20} /> : <Upload size={20} />}
+        <label className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all duration-300 shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-95 cursor-pointer group">
+          {uploading ? <Loader2 className="animate-spin" size={20} /> : <Upload size={20} className="group-hover:translate-y-[-2px] transition-transform" />}
           {uploading ? 'Archiving...' : 'Archive Receipt'}
           <input type="file" className="hidden" onChange={handleFileUpload} accept="image/*" disabled={uploading} />
         </label>
@@ -151,11 +151,14 @@ export function Receipts() {
                   href={receipt.image_url} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="p-3 bg-white/10 border border-white/20 rounded-full text-white hover:bg-primary hover:border-primary transition-all"
+                  className="p-3 bg-white/10 border border-white/20 rounded-full text-white hover:bg-primary hover:border-primary transition-all duration-300 active:scale-90 hover:shadow-[0_0_15px_rgba(99,102,241,0.5)]"
                 >
                   <ExternalLink size={18} />
                 </a>
-                <button className="p-3 bg-white/10 border border-white/20 rounded-full text-white hover:bg-error hover:border-error transition-all">
+                <button 
+                  type="button"
+                  className="p-3 bg-white/10 border border-white/20 rounded-full text-white hover:bg-error hover:border-error transition-all duration-300 active:scale-90 hover:shadow-[0_0_15px_rgba(239,68,68,0.5)]"
+                >
                   <Trash2 size={18} />
                 </button>
               </div>
@@ -177,7 +180,10 @@ export function Receipts() {
                     <CheckCircle2 size={12} /> Linked
                   </span>
                 ) : (
-                  <button className="text-[10px] font-black text-primary uppercase tracking-widest hover:text-white transition-colors">
+                  <button 
+                    type="button"
+                    className="text-[10px] font-black text-primary uppercase tracking-widest hover:text-white transition-all duration-300 active:scale-95 hover:drop-shadow-[0_0_8px_rgba(99,102,241,0.6)]"
+                  >
                     Link Entry
                   </button>
                 )}

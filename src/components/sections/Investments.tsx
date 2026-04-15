@@ -78,8 +78,11 @@ export function Investments() {
           <h2 className="text-3xl font-bold text-white tracking-tight">Portfolio Management</h2>
           <p className="text-slate-400">Track your asset performance and global market allocation.</p>
         </div>
-        <button className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center gap-2">
-          <Plus size={18} />
+        <button 
+          type="button"
+          className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 transition-all duration-300 shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-95 flex items-center gap-2 group"
+        >
+          <Plus size={18} className="group-hover:rotate-90 transition-transform" />
           Add Holding
         </button>
       </div>
@@ -203,12 +206,15 @@ export function Investments() {
       <Card className="p-0 overflow-hidden border-border/50">
         <div className="p-6 border-b border-border bg-card/20 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <CardTitle>Holdings Ledger</CardTitle>
-          <div className="relative max-w-xs w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+          <div className="relative max-w-xs w-full group">
+            <Search 
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 transition-all duration-300 group-focus-within:text-primary group-focus-within:drop-shadow-[0_0_8px_rgba(99,102,241,0.8)]" 
+              size={18} 
+            />
             <input 
               type="text"
               placeholder="Search ticker..."
-              className="w-full bg-background/50 border border-border rounded-xl py-2 pl-10 pr-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+              className="w-full bg-background/50 border border-border rounded-xl py-2.5 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 focus:shadow-[0_0_20px_rgba(99,102,241,0.1)] transition-all duration-300"
             />
           </div>
         </div>

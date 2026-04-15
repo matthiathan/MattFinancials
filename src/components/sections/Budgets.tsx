@@ -84,8 +84,11 @@ export function Budgets() {
           <h2 className="text-3xl font-bold text-white tracking-tight">Budget Allocation</h2>
           <p className="text-slate-400">Manage your monthly spending limits by sector.</p>
         </div>
-        <button className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center gap-2">
-          <Plus size={18} />
+        <button 
+          type="button"
+          className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 transition-all duration-300 shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-95 flex items-center gap-2 group"
+        >
+          <Plus size={18} className="group-hover:rotate-90 transition-transform" />
           Create Budget
         </button>
       </div>

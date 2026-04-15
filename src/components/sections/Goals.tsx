@@ -55,8 +55,11 @@ export function Goals() {
           <h2 className="text-3xl font-bold text-white tracking-tight">Financial Objectives</h2>
           <p className="text-slate-400">Track your progress towards major life milestones and acquisitions.</p>
         </div>
-        <button className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center gap-2">
-          <Plus size={18} />
+        <button 
+          type="button"
+          className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 transition-all duration-300 shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-95 flex items-center gap-2 group"
+        >
+          <Plus size={18} className="group-hover:rotate-90 transition-transform" />
           New Objective
         </button>
       </div>
@@ -142,12 +145,18 @@ export function Goals() {
           const progress = (goal.current_amount / goal.target_amount) * 100;
           
           return (
-            <Card key={goal.id} className="hover:border-primary/50 transition-all group cursor-pointer border-border/50">
+            <Card 
+              key={goal.id} 
+              className="hover:border-primary/50 transition-all duration-300 group cursor-pointer border-border/50 active:scale-[0.98] hover:shadow-[0_0_20px_rgba(99,102,241,0.1)]"
+            >
               <div className="flex justify-between items-start mb-6">
                 <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white group-hover:shadow-[0_0_15px_rgba(99,102,241,0.5)] transition-all duration-300 border border-white/5">
                   <Target size={24} />
                 </div>
-                <button className="p-2 text-slate-600 hover:text-primary transition-colors">
+                <button 
+                  type="button"
+                  className="p-2 text-slate-600 hover:text-primary transition-all duration-300 active:scale-90 hover:drop-shadow-[0_0_8px_rgba(99,102,241,0.6)]"
+                >
                   <ChevronRight size={20} />
                 </button>
               </div>
@@ -168,7 +177,10 @@ export function Goals() {
                 </div>
               </div>
 
-              <button className="w-full mt-6 py-2.5 bg-white/5 text-primary rounded-xl text-xs font-bold hover:bg-primary hover:text-white transition-all border border-primary/20">
+              <button 
+                type="button"
+                className="w-full mt-6 py-2.5 bg-white/5 text-primary rounded-xl text-xs font-bold hover:bg-primary hover:text-white transition-all duration-300 border border-primary/20 active:scale-95 hover:shadow-[0_0_15px_rgba(99,102,241,0.2)]"
+              >
                 Inject Funds
               </button>
             </Card>

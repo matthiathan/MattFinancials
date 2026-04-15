@@ -100,15 +100,19 @@ export function Transactions() {
           <p className="text-slate-400">View and manage your full transaction history.</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="px-4 py-2 bg-card/40 border border-border rounded-xl text-sm font-medium text-slate-300 hover:bg-card/60 transition-all backdrop-blur-xl flex items-center gap-2">
+          <button 
+            type="button"
+            className="px-4 py-2 bg-card/40 border border-border rounded-xl text-sm font-medium text-slate-300 hover:bg-card/60 hover:text-white hover:border-primary/30 hover:shadow-[0_0_15px_rgba(99,102,241,0.1)] transition-all duration-300 active:scale-95 backdrop-blur-xl flex items-center gap-2"
+          >
             <Download size={18} />
             Export CSV
           </button>
           <button 
+            type="button"
             onClick={() => setShowModal(true)}
-            className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center gap-2"
+            className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 transition-all duration-300 shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-95 flex items-center gap-2 group"
           >
-            <Plus size={18} />
+            <Plus size={18} className="group-hover:rotate-90 transition-transform" />
             New Transaction
           </button>
         </div>
@@ -116,21 +120,24 @@ export function Transactions() {
 
       <Card className="p-0 overflow-hidden border-border/50">
         <div className="p-6 border-b border-border bg-card/20 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+          <div className="relative flex-1 max-w-md group">
+            <Search 
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 transition-all duration-300 group-focus-within:text-primary group-focus-within:drop-shadow-[0_0_8px_rgba(99,102,241,0.8)]" 
+              size={18} 
+            />
             <input 
               type="text"
               placeholder="Search transactions..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-background/50 border border-border rounded-xl py-2 pl-10 pr-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+              className="w-full bg-background/50 border border-border rounded-xl py-2.5 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 focus:shadow-[0_0_20px_rgba(99,102,241,0.1)] transition-all duration-300"
             />
           </div>
           <div className="flex items-center gap-3">
             <select 
               value={filter.category}
               onChange={(e) => setFilter({ ...filter, category: e.target.value })}
-              className="bg-background/50 border border-border rounded-xl py-2 px-4 text-sm text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+              className="bg-background/50 border border-border rounded-xl py-2.5 px-4 text-sm text-slate-300 focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all duration-300 cursor-pointer"
             >
               <option>All Categories</option>
               <option>Food</option>
@@ -143,7 +150,7 @@ export function Transactions() {
             <select 
               value={filter.type}
               onChange={(e) => setFilter({ ...filter, type: e.target.value })}
-              className="bg-background/50 border border-border rounded-xl py-2 px-4 text-sm text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+              className="bg-background/50 border border-border rounded-xl py-2.5 px-4 text-sm text-slate-300 focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all duration-300 cursor-pointer"
             >
               <option value="All">All Types</option>
               <option value="income">Income</option>
@@ -197,8 +204,11 @@ export function Transactions() {
                     {tx.type === 'income' ? '+' : '-'}{formatCurrency(Math.abs(tx.amount))}
                   </td>
                   <td className="py-4 px-6 text-right">
-                    <button className="p-1 text-slate-600 hover:text-slate-400 transition-colors">
-                      <MoreVertical size={16} />
+                    <button 
+                      type="button"
+                      className="p-2 text-slate-600 hover:text-primary hover:bg-primary/10 rounded-lg transition-all duration-300 active:scale-90 group"
+                    >
+                      <MoreVertical size={16} className="group-hover:drop-shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
                     </button>
                   </td>
                 </tr>
@@ -294,13 +304,13 @@ export function Transactions() {
                 <button 
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 py-3 bg-card border border-border text-slate-400 rounded-xl font-bold hover:bg-card/80 transition-all"
+                  className="flex-1 py-3 bg-card border border-border text-slate-400 rounded-xl font-bold hover:bg-card/80 hover:text-white transition-all duration-300 active:scale-95"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit"
-                  className="flex-1 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+                  className="flex-1 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all duration-300 shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-95"
                 >
                   Save Transaction
                 </button>

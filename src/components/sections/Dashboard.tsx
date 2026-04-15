@@ -198,11 +198,18 @@ export function Dashboard() {
           <p className="text-slate-400">Real-time analytics and AI-driven insights for your wealth.</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="px-4 py-2 bg-card/40 border border-border rounded-xl text-sm font-medium text-slate-300 hover:bg-card/60 transition-all backdrop-blur-xl">
+          <button 
+            type="button"
+            onClick={() => console.log('Exporting data...')}
+            className="px-4 py-2 bg-card/40 border border-border rounded-xl text-sm font-medium text-slate-300 hover:bg-card/60 hover:text-white hover:border-primary/30 hover:shadow-[0_0_15px_rgba(99,102,241,0.1)] transition-all duration-300 active:scale-95 backdrop-blur-xl"
+          >
             Export Data
           </button>
-          <button className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center gap-2">
-            <Zap size={16} />
+          <button 
+            type="button"
+            className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 transition-all duration-300 shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-95 flex items-center gap-2 group"
+          >
+            <Zap size={16} className="group-hover:animate-pulse" />
             Quick Action
           </button>
         </div>
@@ -387,8 +394,12 @@ export function Dashboard() {
             <CardTitle>Recent Activity</CardTitle>
             <CardDescription>Latest data points from your accounts</CardDescription>
           </div>
-          <button className="text-xs text-primary hover:text-primary/80 font-bold transition-colors uppercase tracking-widest">
+          <button 
+            type="button"
+            className="text-xs text-primary hover:text-primary/80 font-bold transition-all duration-300 uppercase tracking-widest active:scale-95 hover:drop-shadow-[0_0_8px_rgba(99,102,241,0.6)] flex items-center gap-1 group"
+          >
             View Ledger
+            <ArrowUpRight size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
           </button>
         </CardHeader>
         <div className="overflow-x-auto">
